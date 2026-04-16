@@ -16,6 +16,7 @@ RECOMMENDED_MODELS: Dict[str, str] = {
     "gemma2:9b":      "Gemma 2 9B  · high quality but slower        (5.5 GB)",
     "deepseek-r1:7b": "DeepSeek-R1 7B · chain-of-thought            (4.7 GB)",
     "llama3.1:8b":    "LLaMA 3.1 8B · tool-aware                   (4.7 GB)",
+    "gemma2:2b":      "GEMMA 2 2B   · Fast                         (1.6 GB)",
 }
 
 EMBEDDING_MODELS: Dict[str, str] = {
@@ -43,9 +44,9 @@ CORE_AGENT_ICONS = {
 
 def get_agent_color(role_name: str) -> str:
     if role_name in CORE_AGENT_COLORS: return CORE_AGENT_COLORS[role_name]
-    # Dynamically generate a consistent pastel/bright color for new agents based on their name
-    h = hashlib.md5(role_name.encode()).hexdigest()
-    return f"#{h[:6]}"
+    hash_val = int(hashlib.md5(role_name.encode()).hexdigest(), 16)
+    # HSL generation: hue(0-360), saturation(70%), lightness(70% keeps it bright on dark modes)
+    return f"hsl({hash_val % 360}, 70%, 70%)"
 
 def get_agent_icon(role_name: str) -> str:
     if role_name in CORE_AGENT_ICONS: return CORE_AGENT_ICONS[role_name]
@@ -101,7 +102,4 @@ class Config:
 _config: Optional[Config] = None
 
 def get_config() -> Config:
-    global _config
-    if _config is None:
-        _config = Config()
-    return _config
+    return Config()

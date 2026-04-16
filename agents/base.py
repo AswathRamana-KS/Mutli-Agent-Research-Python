@@ -184,18 +184,18 @@ class OllamaBaseAgent(ABC):
 
     def _parse(self, raw: str, task: ResearchTask) -> TaskResult:
         data = _extract_json(raw) or {}
-        truncated = _is_truncated(raw)
-
-        if not data:
-            return TaskResult(
-                task_id=task.task_id, agent_role=self.role, domain=task.domain, title=task.title,
-                summary=raw[:400].strip(), key_points=[], detailed_body=raw.strip(),
-                sources=[], confidence=0.3 if truncated else 0.45, word_count=len(raw.split()),
-            )
+        
+        truncated = False if data else _is_truncated(raw)
 
         body       = str(data.get("detailed_body", ""))
         summary    = str(data.get("summary", ""))
         confidence = float(data.get("confidence", 0.6))
+        
+        # L5 FIX: Even if JSON parsed perfectly, penalize confidence if the text itself was cut off
+        if data:
+            if len(body.split()) < 15 or len(summary.split()) < 5:
+                truncated = True
+        
         if truncated: confidence = min(confidence, 0.5)
 
         return TaskResult(

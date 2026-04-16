@@ -215,7 +215,8 @@ class ManagerAgent:
                 new_role = self._rotate_role(role_name)
                 self._emit(EventType.AGENT_RETRY, task.task_id, f"🔄 Reassigning: {role_name} → {new_role}")
                 role_name = new_role
-                worker = create_worker(new_role, self._cfg, self._queue)
+                # H1 FIX: Pass the custom prompt along to the replacement worker!
+                worker = create_worker(new_role, self._cfg, self._queue, custom_prompt=task.system_prompt)
 
         if best:
             task.status = TaskStatus.COMPLETE
@@ -240,12 +241,18 @@ class ManagerAgent:
 
     def _detect_and_resolve_contradictions(self, results: List[TaskResult]) -> None:
         neg = {"not ", "never ", "no evidence", "disproven", "incorrect", "false"}
+        # 🎯 FIX: Ignore generic research words so it doesn't trigger fake conflicts!
+        ignore_words = {"analysis", "study", "evaluation", "assessment", "breakdown", "exploration", "impact", "system", "dynamics"}
+        
         for i, r1 in enumerate(results):
             b1 = (r1.summary + " " + r1.detailed_body).lower()
             for r2 in results[i+1:]:
                 b2 = (r2.summary + " " + r2.detailed_body).lower()
+                
+                # Find common words in titles, ignoring the generic stop-words
                 common_words = set(r1.title.lower().split()) & set(r2.title.lower().split())
-                common = {w for w in common_words if len(w) > 4}
+                common = {w for w in common_words if len(w) > 4 and w not in ignore_words}
+                
                 if common:
                     for w in neg:
                         if (w in b1 and w not in b2) or (w in b2 and w not in b1):
@@ -276,12 +283,12 @@ class ManagerAgent:
                 
                 worker = create_worker("FactFinder", self._cfg, self._queue)
                 try:
-                    t.max_retries = 0 
-                    t.assigned_to = "FactFinder"
-                    rag_ctx = retriever.retrieve(t.description) if retriever else ""
-                    res = worker.execute(t, rag_ctx)
+                    # M2 FIX: Use model_copy so we don't mutate the original task object
+                    fill_task = t.model_copy(update={"max_retries": 0, "assigned_to": "FactFinder"})
+                    rag_ctx = retriever.retrieve(fill_task.description) if retriever else ""
+                    res = worker.execute(fill_task, rag_ctx)
                     results.append(res)
-                    self._emit(EventType.LOG, message=f"✅ Gap filled successfully for '{t.title}'.")
+                    self._emit(EventType.LOG, message=f"✅ Gap filled successfully for '{fill_task.title}'.")
                 except Exception as e:
                     self._emit(EventType.LOG, message=f"❌ Could not fill gap for '{t.title}': {e}")
 
