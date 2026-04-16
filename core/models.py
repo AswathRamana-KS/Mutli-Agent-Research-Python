@@ -8,7 +8,6 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 
-
 class TaskStatus(str, Enum):
     PENDING     = "pending"
     IN_PROGRESS = "in_progress"
@@ -16,13 +15,11 @@ class TaskStatus(str, Enum):
     FAILED      = "failed"
     RETRYING    = "retrying"
 
-
 class RetrievalMode(str, Enum):
     NONE   = "none"
     LOCAL  = "local_rag"
     WEB    = "web_scrape"
     HYBRID = "hybrid"
-
 
 class EventType(str, Enum):
     PIPELINE_START    = "pipeline_start"
@@ -50,7 +47,6 @@ class EventType(str, Enum):
     SYNTHESIS_COMPLETE = "synthesis_complete"
     LOG               = "log"
 
-
 class PipelineEvent(BaseModel):
     event_id:   str      = Field(default_factory=lambda: str(uuid.uuid4())[:8])
     event_type: EventType
@@ -63,20 +59,18 @@ class PipelineEvent(BaseModel):
     def fmt_time(self) -> str:
         return self.timestamp.strftime("%H:%M:%S")
 
-
 class ResearchTask(BaseModel):
     task_id:        str = Field(default_factory=lambda: str(uuid.uuid4())[:8])
     title:          str
     description:    str
-    assigned_to:    str          # The dynamic or core role name
-    system_prompt:  str = ""     # Dynamic persona instructions
-    domain:         str = ""     # e.g. "Economic Modeling", "Policy & Governance"
+    assigned_to:    str          
+    system_prompt:  str = ""     
+    domain:         str = ""     
     status:         TaskStatus = TaskStatus.PENDING
     retrieval_mode: RetrievalMode = RetrievalMode.NONE
     retry_count:    int = 0
     max_retries:    int = 1
     created_at:     datetime = Field(default_factory=datetime.now)
-
 
 class TaskResult(BaseModel):
     task_id:        str
@@ -91,62 +85,43 @@ class TaskResult(BaseModel):
     quality_score:  Optional[float] = None
     rag_chunks_used: int = 0
     word_count:     int = 0
-    conflict_resolution: Optional[str] = None # BUG 5 FIX: Dedicated field
-
+    conflict_resolution: Optional[str] = None # 🎯 Ensures Manager can save conflict resolutions
 
 class FinalReport(BaseModel):
     query:       str
     run_id:      str = Field(default_factory=lambda: str(uuid.uuid4())[:8])
     generated_at: datetime = Field(default_factory=datetime.now)
-
-    # Dynamic sections — one per domain the manager assigned
     sections: Dict[str, str] = Field(default_factory=dict)
-
-    # Structured metadata
     key_findings:        List[str] = Field(default_factory=list)
     agent_contributions: Dict[str, str] = Field(default_factory=dict)
     executive_summary:   str = ""
     conclusion:          str = ""
 
     def to_markdown(self) -> str:
-        lines: List[str] = [
-            f"# Research Report",
-            f"",
-            f"**Query:** {self.query}",
-            f"",
-            f"---",
-            f"",
-        ]
-
-        if self.executive_summary:
+        lines: List[str] = [f"# Research Report", f"", f"**Query:** {self.query}", f"", f"---", f""]
+        
+        if self.executive_summary: 
             lines += ["## Executive Summary", "", self.executive_summary, ""]
-
+            
         if self.key_findings:
             lines += ["## Key Findings", ""]
-            for i, f in enumerate(self.key_findings, 1):
-                lines.append(f"{i}. {f}")
+            for i, f in enumerate(self.key_findings, 1): lines.append(f"{i}. {f}")
             lines.append("")
-
+            
         if self.sections:
             lines += ["---", "", "## Detailed Analysis by Domain", ""]
-            for domain, content in self.sections.items():
-                lines += [f"### {domain}", "", content, ""]
-
-        if self.conclusion:
+            for domain, content in self.sections.items(): lines += [f"### {domain}", "", content, ""]
+            
+        if self.conclusion: 
             lines += ["---", "", "## Conclusion", "", self.conclusion, ""]
-
+            
         if self.agent_contributions:
             lines += ["---", "", "## Agent Contributions", ""]
-            for agent, contrib in self.agent_contributions.items():
-                lines.append(f"**{agent}**: {contrib}")
+            for agent, contrib in self.agent_contributions.items(): lines.append(f"**{agent}**: {contrib}")
             lines.append("")
-
-        lines.append(
-            f"*Generated {self.generated_at.strftime('%Y-%m-%d %H:%M:%S')}  "
-            f"· Run ID: {self.run_id}*"
-        )
+            
+        lines.append(f"*Generated {self.generated_at.strftime('%Y-%m-%d %H:%M:%S')} · Run ID: {self.run_id}*")
         return "\n".join(lines)
-
 
 class ExecutionStats(BaseModel):
     total_events:     int   = 0
