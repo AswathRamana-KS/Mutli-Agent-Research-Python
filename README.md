@@ -220,6 +220,47 @@ The system follows a Manager-Worker multi-agent architecture:
                     |   Final Report       |
                     +----------------------+
 ---
+[ User Interface (Streamlit) ]
+       │
+       ▼ (Query + Files + URLs)
+[ Research Pipeline (Background Thread) ]
+       │
+       ├──► 1. Data Ingestion Phase
+       │       ├─► Web Scraper (Firecrawl API / BS4) ──┐
+       │       ├─► Local File Parser (PDF/TXT/DOCX) ───┼─► [ Document Chunker ]
+       │                                               │
+       │                                               ▼
+       │                                       [ Ollama Embeddings ]
+       │                                               │
+       │                                               ▼
+       │                                     [( ChromaDB Vector Store )]
+       │
+       ├──► 2. Orchestration Phase
+               │
+               ▼
+        [ Manager Agent (LLaMA 3) ] ◄── (Orchestrates)
+               │
+               ├──► Assess Complexity (1-5 Tasks)
+               ├──► Plan & Invent Roles (e.g., "MarineBiologist")
+               │
+               ├──► 3. Execution Phase (Parallel/Sequential)
+               │       ├─► Worker 1 ◄── (Queries) ── [( ChromaDB )]
+               │       ├─► Worker 2 ◄── (Queries) ── [( ChromaDB )]
+               │       └─► Worker N ◄── (Queries) ── [( ChromaDB )]
+               │
+               ├──► 4. Quality & Consensus Phase
+               │       ├─► Quality Gate (Pass/Fail/Retry)
+               │       ├─► Gap Filler (Spins up FactFinder for missing data)
+               │       └─► Conflict Resolution (Manager debates contradictions)
+               │
+               └──► 5. Synthesis Phase
+                       ├─► Draft Domain Sections
+                       ├─► Draft Executive Summary
+                       └─► Draft Conclusion
+                               │
+                               ▼
+                    [ Final Markdown Report ] ──► (Sent back to Streamlit UI)
+---
 
 ## 📄 Output Format
 
