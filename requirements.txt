@@ -1,0 +1,27 @@
+# ── UI ────────────────────────────────────────────────────────────────
+streamlit>=1.32.0
+
+# ── LLM (local Ollama — no API key) ───────────────────────────────────
+requests>=2.31.0          # Ollama HTTP API
+
+# ── Data models ────────────────────────────────────────────────────────
+pydantic>=2.0.0
+
+# ── Local RAG vector store ─────────────────────────────────────────────
+chromadb>=0.5.0
+
+# ── Embeddings (choose one backend) ───────────────────────────────────
+# Option A: Ollama embeddings — no extra install needed (uses requests)
+# Option B: sentence-transformers (CPU-friendly, offline)
+sentence-transformers>=2.7.0
+
+# ── Document ingestion ─────────────────────────────────────────────────
+pypdf>=4.0.0              # PDF reading
+python-docx>=1.1.0        # DOCX reading
+
+# ── Web scraping ───────────────────────────────────────────────────────
+beautifulsoup4>=4.12.0    # Free fallback scraper
+lxml>=5.0.0               # BS4 parser
+
+# ── Firecrawl (optional — only needed if you have an API key) ──────────
+# firecrawl-py>=0.0.16    # Uncomment if you have a Firecrawl API key

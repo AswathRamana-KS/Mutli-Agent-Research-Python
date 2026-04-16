@@ -1,0 +1,20 @@
+# .gitignore
+# Ignore Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Ignore virtual environments
+mrvenv/
+venv/
+env/
+.env
+
+# Ignore vector database binaries (BUG 7 FIX)
+chroma_db/
+
+# Ignore local execution logs
+execution.log
+
+
+Dummy/
